@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <div>
+    Score:  
+    <div id="scoreBoard">
+      Waiting for scores
+    </div>
+  </div>
+  <div>
+    Commentary:
+    <div id="commentary">
+      Waiting for comments
+    </div>
+  </div>  
+</body>
+
+<script src="js/jquery-1.9.1.min.js"></script>
+<script src="js/sockjs-0.2.1.min.js"></script>
+<script src='js/vertxbus.min.js'></script>
+<script src="js/jquery.mustache.js"></script>
+<script src="js/mustache.js"></script>
+
+<script>
+    $(document).ready(function() {
+      var eb = new vertx.EventBus('/eventbus');
+      eb.onopen = function() {
+        eb.registerHandler('instascore.comments.1', function(comment) {
+          console.log($("#commentary").text());
+           if ($("#commentary").text().trim() == "Waiting for comments") {
+            $("#commentary").empty();
+           }
+           $('#commentary').mustache('comment-tmpl', comment, { method: 'prepend' });
+        });
+
+        eb.registerHandler('instascore.scoreUpdate.1', function(score) {
+           $('#scoreBoard').empty();
+           console.log(score);
+           $.each(score.teams, function(i, team) {
+            console.log(team);
+            $('#scoreBoard').mustache('team-batting-score-tmpl', team);
+           });
+        });
+      }
+      $.Mustache.addFromDom('team-batting-score-tmpl');
+      $.Mustache.addFromDom('comment-tmpl');
+    });
+</script>
+
+<script id="team-batting-score-tmpl" type="text/html">
+    <div>{{name}} : 
+      <span class="score">{{runs}}</span> / 
+      <span class="wickets">{{wickets}}</span> in 
+      <span class="overs">{{overs}} overs</span>
+    </div>
+</script>
+
+<script id="comment-tmpl" type="text/html">
+    <div>
+      <span class="time">{{time}}</span>
+      <span class="user">{{user}} </span>
+      <span class="content">{{content}}</span> 
+    </div>
+</script>
+</html>
