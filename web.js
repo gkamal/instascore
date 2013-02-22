@@ -18,7 +18,8 @@ routeMatcher.put('/matches/:matchId/score', function(req) {
     req.bodyHandler(function(body) {
       var matchId = req.params().matchId;
       var score =  body.toString();
-      eb.publish("instascore.scoreUpdate." + matchId, {"teams" : JSON.parse(score)});
+      eb.publish("instascore.scoreUpdate." + matchId, 
+        JSON.parse(score));
       map.put(matchId, score);
       req.response.end("success");
     });
@@ -52,3 +53,5 @@ sockJSServer.bridge({prefix : '/eventbus'}, [], [{}]);
 
 server.listen(8080, 'localhost');
 logger.info("Started successfully!!");
+
+

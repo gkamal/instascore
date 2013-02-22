@@ -1,8 +1,11 @@
 <!DOCTYPE html>
 <html>
+<style type="text/css">
+body {font-size:200%}
+</style>
 <body>
   <div>
-    Score:  
+    Score <span id="updatedAt"></span>:
     <div id="scoreBoard">
       Waiting for scores
     </div>
@@ -13,8 +16,6 @@
       Waiting for comments
     </div>
   </div>  
-</body>
-
 <script src="js/jquery-1.9.1.min.js"></script>
 <script src="js/sockjs-0.2.1.min.js"></script>
 <script src='js/vertxbus.min.js'></script>
@@ -22,44 +23,58 @@
 <script src="js/mustache.js"></script>
 
 <script>
-    $(document).ready(function() {
+  function updateComment(comment) {
+    comment.formattedtime = function() {
+      return new Date(comment.time).toLocaleTimeString();
+    }
+    if ($("#commentary").text().trim() === "Waiting for comments") {
+      $("#commentary").empty();
+    }
+    $('#commentary').mustache('comment-tmpl', comment, { method: 'prepend' });
+  }
+
+  function updateScoreBoard(score) {
+    $("#updatedAt").text("(As of "  + new Date(score.time).toLocaleTimeString() + ")");
+    $('#scoreBoard').empty();
+    $.each(score.teams, function (i, team) {
+      $('#scoreBoard').mustache('team-batting-score-tmpl', team);
+    });
+  }
+
+  function setupTemplates() {
+    $.Mustache.addFromDom('team-batting-score-tmpl');
+    $.Mustache.addFromDom('comment-tmpl');
+  }
+</script>
+<script>
+    $(document).ready(function () {
+      
       var eb = new vertx.EventBus('/eventbus');
-      eb.onopen = function() {
-        eb.registerHandler('instascore.comments.1', function(comment) {
-          console.log($("#commentary").text());
-           if ($("#commentary").text().trim() == "Waiting for comments") {
-            $("#commentary").empty();
-           }
-           $('#commentary').mustache('comment-tmpl', comment, { method: 'prepend' });
+
+      eb.onopen = function () {
+        eb.registerHandler('instascore.comments.1', function (comment) {
+          updateComment(comment);
         });
 
-        eb.registerHandler('instascore.scoreUpdate.1', function(score) {
-           $('#scoreBoard').empty();
-           console.log(score);
-           $.each(score.teams, function(i, team) {
-            console.log(team);
-            $('#scoreBoard').mustache('team-batting-score-tmpl', team);
-           });
+        eb.registerHandler('instascore.scoreUpdate.1', function (score) {
+          updateScoreBoard(score);
         });
-      }
-      $.Mustache.addFromDom('team-batting-score-tmpl');
-      $.Mustache.addFromDom('comment-tmpl');
+      };
+
+      setupTemplates();
     });
 </script>
 
 <script id="team-batting-score-tmpl" type="text/html">
-    <div>{{name}} : 
-      <span class="score">{{runs}}</span> / 
-      <span class="wickets">{{wickets}}</span> in 
-      <span class="overs">{{overs}} overs</span>
+    <div>
+      {{name}}  : {{#runs}}{{runs}} For {{wickets}}{{/runs}}
     </div>
 </script>
 
 <script id="comment-tmpl" type="text/html">
     <div>
-      <span class="time">{{time}}</span>
-      <span class="user">{{user}} </span>
-      <span class="content">{{content}}</span> 
+      {{formattedtime}} : {{user}} : {{content}}
     </div>
 </script>
+</body>
 </html>
