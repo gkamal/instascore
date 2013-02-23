@@ -3,6 +3,9 @@
 <style type="text/css">
 body {font-size:200%}
 </style>
+<head>
+    <title>InstaScore : Instant score updates</title>
+</head>  
 <body>
   <div>
     Score <span id="updatedAt"></span>:
@@ -58,6 +61,7 @@ body {font-size:200%}
 
         eb.registerHandler('instascore.scoreUpdate.1', function (score) {
           updateScoreBoard(score);
+          console.log(JSON.stringify(score));
         });
       };
 
